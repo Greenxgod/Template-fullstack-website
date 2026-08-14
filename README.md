@@ -17,7 +17,6 @@
 - ✅ MongoDB + Mongoose
 - ✅ Хеширование паролей (bcryptjs)
 - ✅ Глобальные обработчики ошибок
-- ✅ **Система миграций БД** (up/down rollback, транзакции)
 
 ### Frontend
 - ✅ Контекст аутентификации (AuthContext)
@@ -74,68 +73,7 @@ JWT_EXPIRE=7d
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 ADMIN_URL=http://localhost:3001
-RUN_MIGRATIONS=true
 ```
-
----
-
-## 🗄️ Миграции базы данных
-
-Проект включает мощную систему миграций для MongoDB с поддержкой:
-
-- Версионирование изменений схемы БД
-- Up/Down миграции для отката изменений
-- Автоматическое отслеживание применённых миграций
-- Транзакции (для MongoDB 4.0+)
-- Идмпотентность (безопасный повторный запуск)
-
-### Запуск миграций
-
-```bash
-# Запустить все ожидающие миграции
-npm run migrate:up
-
-# Откатить последнюю миграцию
-npm run migrate:down
-
-# Откатить все миграции
-npm run migrate:rollback-all
-
-# Показать статус миграций
-npm run migrate:status
-```
-
-### Создание новой миграции
-
-Добавьте миграцию в `backend/src/migrations/index.js`:
-
-```javascript
-migrationRunner.addMigration(
-    '005-add-new-field',
-    
-    // UP - применение
-    async (session) => {
-        const db = mongoose.connection.db;
-        await db.collection('users').updateMany(
-            {},
-            { $set: { newField: 'defaultValue' } },
-            { session }
-        );
-    },
-    
-    // DOWN - откат
-    async (session) => {
-        const db = mongoose.connection.db;
-        await db.collection('users').updateMany(
-            {},
-            { $unset: { newField: '' } },
-            { session }
-        );
-    }
-);
-```
-
-📖 Полная документация по миграциям: [backend/src/migrations/README.md](backend/src/migrations/README.md)
 
 ---
 
@@ -154,12 +92,6 @@ auth-template/
 │   │   │   └── users.js
 │   │   ├── middlewares/
 │   │   │   └── auth.js
-│   │   ├── migrations/           # Система миграций БД
-│   │   │   ├── MigrationRunner.js
-│   │   │   ├── index.js
-│   │   │   └── README.md
-│   │   ├── scripts/              # CLI скрипты
-│   │   │   └── migrate.js
 │   │   └── server.js
 │   ├── package.json
 │   └── .env.example
@@ -224,8 +156,7 @@ auth-template/
 2. Скопируйте либо `frontend`, либо `admin-panel` (или оба)
 3. Настройте переменные окружения
 4. Запустите MongoDB
-5. Запустите миграции: `npm run migrate:up`
-6. Запустите все сервисы
+5. Запустите все сервисы
 
 ---
 
@@ -236,22 +167,6 @@ auth-template/
 - sameSite: strict защищает от CSRF атак
 - secure: true в production (только HTTPS)
 - Rate limiting предотвращает брутфорс атаки
-
----
-
-## 👥 Роли пользователей
-
-В проекте реализована система ролей:
-
-- **user** - обычный пользователь (может регистрироваться на фронте, имеет доступ к dashboard)
-- **admin** - администратор (имеет доступ к админ-панели для управления пользователями)
-
-По умолчанию при регистрации создаётся пользователь с ролью `user`.
-Администратор создаётся через миграцию при первом запуске:
-- Email: `admin@example.com`
-- Пароль: `admin123`
-
-⚠️ **Важно:** Смените пароль администратора в production!
 
 ---
 
