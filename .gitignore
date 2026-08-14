@@ -1,0 +1,30 @@
+```
+# Environment variables
+.env.local
+
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.eggs/
+.egg-info/
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+```
