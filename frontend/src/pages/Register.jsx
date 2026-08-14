@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: ''
   });
@@ -27,9 +28,10 @@ const Register = () => {
     setLoading(true);
 
     const result = await register(
-      formData.username,
       formData.email,
-      formData.password
+      formData.password,
+      formData.firstName,
+      formData.lastName
     );
     
     if (result.success) {
@@ -54,16 +56,26 @@ const Register = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="firstName">First Name</label>
             <input
               type="text"
-              id="username"
-              name="username"
-              value={formData.username}
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
               onChange={handleChange}
-              required
-              minLength={3}
-              placeholder="Enter your username"
+              placeholder="Enter your first name"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lastName">Last Name</label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Enter your last name"
             />
           </div>
 
