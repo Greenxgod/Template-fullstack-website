@@ -57,12 +57,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password) => {
+  const register = async (email, password, firstName, lastName) => {
     try {
       setError(null);
       const response = await axios.post(
         '/api/auth/register',
-        { username, email, password },
+        { email, password, firstName, lastName },
         { withCredentials: true }
       );
 
@@ -96,7 +96,9 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin'
+    isAdmin: user?.role === 'admin',
+    isModerator: user?.role === 'moderator',
+    isAdminOrModerator: user?.role === 'admin' || user?.role === 'moderator'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
