@@ -8,12 +8,10 @@ const User = require('../models/User');
 // @access  Public
 router.post('/register', async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { email, password, firstName, lastName } = req.body;
 
         // Check if user exists
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { username }] 
-        });
+        const existingUser = await User.findOne({ where: { email } });
 
         if (existingUser) {
             return res.status(400).json({ 
@@ -24,14 +22,15 @@ router.post('/register', async (req, res) => {
 
         // Create user
         const user = await User.create({
-            username,
             email,
-            password
+            password,
+            firstName: firstName || '',
+            lastName: lastName || ''
         });
 
         // Generate token
         const token = jwt.sign(
-            { id: user._id },
+            { id: user.id },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRE }
         );
@@ -47,9 +46,10 @@ router.post('/register', async (req, res) => {
         res.status(201).json({
             success: true,
             data: {
-                id: user._id,
-                username: user.username,
+                id: user.id,
                 email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 role: user.role
             }
         });
@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Check for user
-        const user = await User.findOne({ email }).select('+password');
+        const user = await User.findOne({ where: { email } });
 
         if (!user) {
             return res.status(401).json({ 
@@ -107,7 +107,7 @@ router.post('/login', async (req, res) => {
 
         // Generate token
         const token = jwt.sign(
-            { id: user._id },
+            { id: user.id },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRE }
         );
@@ -123,9 +123,10 @@ router.post('/login', async (req, res) => {
         res.json({
             success: true,
             data: {
-                id: user._id,
-                username: user.username,
+                id: user.id,
                 email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 role: user.role
             }
         });
@@ -157,7 +158,7 @@ router.get('/me', async (req, res) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findByPk(decoded.id, { attributes: { exclude: ['password'] } });
 
         if (!user || !user.isActive) {
             return res.status(401).json({ 
@@ -169,9 +170,10 @@ router.get('/me', async (req, res) => {
         res.json({
             success: true,
             data: {
-                id: user._id,
-                username: user.username,
+                id: user.id,
                 email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 role: user.role
             }
         });
@@ -196,6 +198,51 @@ router.post('/logout', (req, res) => {
         success: true,
         message: 'Logged out successfully'
     });
+});
+
+// @route   GET /api/auth/admin/check
+// @desc    Check admin rights
+// @access  Private
+router.get('/admin/check', async (req, res) => {
+    try {
+        let token;
+
+        if (req.cookies && req.cookies.token) {
+            token = req.cookies.token;
+        }
+
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Not authorized' 
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findByPk(decoded.id, { attributes: { exclude: ['password'] } });
+
+        if (!user || !user.isActive) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Not authorized' 
+            });
+        }
+
+        const isAdminOrModerator = user.role === 'admin' || user.role === 'moderator';
+
+        res.json({
+            success: true,
+            data: {
+                isAdmin: isAdminOrModerator,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Not authorized' 
+        });
+    }
 });
 
 module.exports = router;

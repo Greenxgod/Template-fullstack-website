@@ -4,9 +4,9 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const connectDB = require('./config/db');
+const { connectDB } = require('./config/db');
 const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
+const { router: userRoutes, authMiddleware, requireRole } = require('./routes/users');
 
 // Initialize express app
 const app = express();
