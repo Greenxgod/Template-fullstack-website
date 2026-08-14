@@ -5,17 +5,22 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/migrate.js",
+    "migrate:rollback": "node src/migrate-rollback.js",
+    "migrate:rollback-all": "node src/migrate-rollback-all.js",
+    "migrate:status": "node src/migrate-status.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.0.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express-rate-limit": "^7.1.5"
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.23.3",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

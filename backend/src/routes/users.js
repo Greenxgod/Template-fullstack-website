@@ -1,14 +1,65 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middlewares/auth');
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+
+// Middleware to check JWT token
+const authMiddleware = async (req, res, next) => {
+    let token;
+
+    if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Not authorized' 
+        });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = await User.findByPk(decoded.id, { attributes: { exclude: ['password'] } });
+        
+        if (!req.user || !req.user.isActive) {
+            return res.status(401).json({ 
+                success: false, 
+                message: 'Not authorized' 
+            });
+        }
+        
+        next();
+    } catch (error) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Not authorized' 
+        });
+    }
+};
+
+// Middleware to check role
+const requireRole = (roles) => {
+    return async (req, res, next) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            return res.status(403).json({ 
+                success: false, 
+                message: `Access denied. Required roles: ${roles.join(', ')}` 
+            });
+        }
+        next();
+    };
+};
 
 // @route   GET /api/users
-// @desc    Get all users (admin only)
-// @access  Private/Admin
-router.get('/', protect, admin, async (req, res) => {
+// @desc    Get all users (admin/moderator only)
+// @access  Private/Admin, Moderator
+router.get('/', authMiddleware, requireRole(['admin', 'moderator']), async (req, res) => {
     try {
-        const User = require('../models/User');
-        const users = await User.find().select('-password');
+        const users = await User.findAll({ 
+            attributes: { exclude: ['password'] },
+            order: [['createdAt', 'DESC']]
+        });
         
         res.json({
             success: true,
@@ -27,10 +78,11 @@ router.get('/', protect, admin, async (req, res) => {
 // @route   GET /api/users/:id
 // @desc    Get user by ID
 // @access  Private
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
     try {
-        const User = require('../models/User');
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await User.findByPk(req.params.id, { 
+            attributes: { exclude: ['password'] } 
+        });
 
         if (!user) {
             return res.status(404).json({ 
@@ -52,4 +104,4 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = { router, authMiddleware, requireRole };
